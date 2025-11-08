@@ -44,6 +44,32 @@
         opacity: 0.9;
       }
 
+      .nav {
+        background: #f8f9fa;
+        padding: 15px 30px;
+        display: flex;
+        gap: 15px;
+        border-bottom: 2px solid #e0e0e0;
+      }
+
+      .nav a {
+        text-decoration: none;
+        color: #667eea;
+        font-weight: 600;
+        padding: 8px 16px;
+        border-radius: 6px;
+        transition: background 0.3s;
+      }
+
+      .nav a:hover {
+        background: #e0e0e0;
+      }
+
+      .nav a.active {
+        background: #667eea;
+        color: white;
+      }
+
       .content {
         padding: 40px;
       }
@@ -237,6 +263,11 @@
       <div class="header">
         <h1>🛡️ XSS Protection Demo</h1>
         <p>HTML Storage App with Built-in XSS Vulnerability Protection</p>
+      </div>
+
+      <div class="nav">
+        <a href="/" class="active">Sanitization Demo</a>
+        <a href="/encode.html">Encoding Demo</a>
       </div>
 
       <div class="content">
