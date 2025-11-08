@@ -12,7 +12,7 @@ A Node.js application that demonstrates proper handling of XSS (Cross-Site Scrip
 
 ## Security Implementation
 
-The application uses **DOMPurify** to sanitize all HTML input before storing it. This prevents:
+The application uses **js-xss** library to sanitize all HTML input before storing it. This prevents:
 
 - Script injection (`<script>` tags)
 - Event handlers (`onerror`, `onclick`, etc.)
@@ -181,21 +181,20 @@ xss_sample/
 
 - **express**: Web framework
 - **body-parser**: Parse incoming request bodies
-- **dompurify**: HTML sanitization library
-- **jsdom**: JavaScript implementation of DOM for Node.js
+- **xss** (js-xss): HTML sanitization library
 - **fs-extra**: Enhanced file system operations
 
 ## How XSS Protection Works
 
 1. **Input Validation**: Server validates that HTML and filename are provided
-2. **Sanitization**: DOMPurify processes the HTML and removes all potentially dangerous content
+2. **Sanitization**: js-xss library processes the HTML and removes all potentially dangerous content using a whitelist approach
 3. **Safe Storage**: Only sanitized HTML is stored to the file system
 4. **Secure Output**: Stored files include a visual indicator that content has been sanitized
 
 ## Key Security Features
 
 - ✅ Input validation on all endpoints
-- ✅ HTML sanitization using DOMPurify
+- ✅ HTML sanitization using js-xss library with whitelist approach
 - ✅ Safe filename handling (removes special characters)
 - ✅ Path traversal protection
 - ✅ Restricted HTML tag and attribute whitelist

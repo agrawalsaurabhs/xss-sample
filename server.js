@@ -2,15 +2,37 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const fs = require("fs-extra");
 const path = require("path");
-const { JSDOM } = require("jsdom");
-const DOMPurify = require("dompurify");
+const xss = require("xss");
 
 const app = express();
 const PORT = 3000;
 
-// Create a DOMPurify instance with jsdom
-const window = new JSDOM("").window;
-const purify = DOMPurify(window);
+// Configure XSS filter with custom options
+const xssOptions = {
+  whiteList: {
+    p: ["class", "id"],
+    br: [],
+    strong: ["class", "id"],
+    em: ["class", "id"],
+    u: ["class", "id"],
+    h1: ["class", "id"],
+    h2: ["class", "id"],
+    h3: ["class", "id"],
+    h4: ["class", "id"],
+    h5: ["class", "id"],
+    h6: ["class", "id"],
+    ul: ["class", "id"],
+    ol: ["class", "id"],
+    li: ["class", "id"],
+    a: ["href", "title", "class", "id"],
+    div: ["class", "id"],
+    span: ["class", "id"],
+  },
+  stripIgnoreTag: true, // Remove tags not in whitelist
+  stripIgnoreTagBody: ["script"], // Remove script tag content
+};
+
+const xssFilter = new xss.FilterXSS(xssOptions);
 
 // Middleware
 app.use(bodyParser.json());
@@ -43,30 +65,8 @@ app.post("/api/store-html", async (req, res) => {
       });
     }
 
-    // Sanitize the HTML to prevent XSS attacks
-    const sanitizedHtml = purify.sanitize(html, {
-      ALLOWED_TAGS: [
-        "p",
-        "br",
-        "strong",
-        "em",
-        "u",
-        "h1",
-        "h2",
-        "h3",
-        "h4",
-        "h5",
-        "h6",
-        "ul",
-        "ol",
-        "li",
-        "a",
-        "div",
-        "span",
-      ],
-      ALLOWED_ATTR: ["href", "title", "class", "id"],
-      ALLOW_DATA_ATTR: false,
-    });
+    // Sanitize the HTML to prevent XSS attacks using js-xss library
+    const sanitizedHtml = xssFilter.process(html);
 
     // Generate safe filename
     const safeFilename = filename.replace(/[^a-zA-Z0-9-_]/g, "_");
