@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>XSS Protection Demo - HTML Storage App</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+      }
+
+      .header h1 {
+        font-size: 32px;
+        margin-bottom: 10px;
+      }
+
+      .header p {
+        font-size: 16px;
+        opacity: 0.9;
+      }
+
+      .content {
+        padding: 40px;
+      }
+
+      .section {
+        margin-bottom: 30px;
+      }
+
+      .section h2 {
+        color: #333;
+        margin-bottom: 15px;
+        font-size: 24px;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        color: #555;
+        font-weight: 600;
+      }
+
+      input[type="text"],
+      textarea {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e0e0e0;
+        border-radius: 6px;
+        font-size: 14px;
+        font-family: inherit;
+        transition: border-color 0.3s;
+      }
+
+      input[type="text"]:focus,
+      textarea:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+
+      textarea {
+        min-height: 200px;
+        resize: vertical;
+        font-family: "Courier New", monospace;
+      }
+
+      button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 12px 30px;
+        border: none;
+        border-radius: 6px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+      }
+
+      button:active {
+        transform: translateY(0);
+      }
+
+      .alert {
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+        display: none;
+      }
+
+      .alert.success {
+        background-color: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+      }
+
+      .alert.error {
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+      }
+
+      .alert.info {
+        background-color: #d1ecf1;
+        border: 1px solid #bee5eb;
+        color: #0c5460;
+      }
+
+      .xss-examples {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 6px;
+        margin-top: 20px;
+      }
+
+      .xss-examples h3 {
+        color: #721c24;
+        margin-bottom: 15px;
+      }
+
+      .xss-example {
+        background-color: white;
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 10px;
+        border-left: 4px solid #dc3545;
+      }
+
+      .xss-example code {
+        font-family: "Courier New", monospace;
+        color: #c7254e;
+        background-color: #f9f2f4;
+        padding: 2px 6px;
+        border-radius: 3px;
+        display: block;
+        overflow-x: auto;
+      }
+
+      .files-list {
+        margin-top: 20px;
+      }
+
+      .file-item {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .file-item span {
+        font-family: "Courier New", monospace;
+        color: #333;
+      }
+
+      .file-actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .btn-small {
+        padding: 6px 15px;
+        font-size: 14px;
+      }
+
+      .btn-view {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+      }
+
+      .btn-delete {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+      }
+
+      .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 6px;
+        text-align: center;
+      }
+
+      .stat-card h4 {
+        font-size: 14px;
+        opacity: 0.9;
+        margin-bottom: 8px;
+      }
+
+      .stat-card p {
+        font-size: 28px;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🛡️ XSS Protection Demo</h1>
+        <p>HTML Storage App with Built-in XSS Vulnerability Protection</p>
+      </div>
+
+      <div class="content">
+        <!-- Alert Messages -->
+        <div id="alertBox" class="alert"></div>
+
+        <!-- Input Section -->
+        <div class="section">
+          <h2>Store HTML Content</h2>
+          <form id="htmlForm">
+            <div class="form-group">
+              <label for="filename">Filename:</label>
+              <input
+                type="text"
+                id="filename"
+                name="filename"
+                placeholder="my-document"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="htmlContent">HTML Content:</label>
+              <textarea
+                id="htmlContent"
+                name="htmlContent"
+                placeholder="Enter your HTML content here..."
+                required
+              ></textarea>
+            </div>
+            <button type="submit">Store HTML (Protected)</button>
+          </form>
+
+          <!-- Stats Section -->
+          <div class="stats" id="statsSection" style="display: none">
+            <div class="stat-card">
+              <h4>Original Size</h4>
+              <p id="originalSize">0</p>
+            </div>
+            <div class="stat-card">
+              <h4>Sanitized Size</h4>
+              <p id="sanitizedSize">0</p>
+            </div>
+            <div class="stat-card">
+              <h4>Bytes Removed</h4>
+              <p id="bytesRemoved">0</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- XSS Examples -->
+        <div class="section">
+          <div class="xss-examples">
+            <h3>🔒 Try These XSS Attacks (They'll be sanitized!)</h3>
+            <div class="xss-example">
+              <strong>Script Injection:</strong>
+              <code>&lt;script&gt;alert('XSS Attack!')&lt;/script&gt;</code>
+            </div>
+            <div class="xss-example">
+              <strong>Event Handler:</strong>
+              <code>&lt;img src=x onerror="alert('XSS')"&gt;</code>
+            </div>
+            <div class="xss-example">
+              <strong>JavaScript Protocol:</strong>
+              <code
+                >&lt;a href="javascript:alert('XSS')"&gt;Click
+                me&lt;/a&gt;</code
+              >
+            </div>
+            <div class="xss-example">
+              <strong>Inline Event:</strong>
+              <code
+                >&lt;div onclick="alert('XSS')"&gt;Click here&lt;/div&gt;</code
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Files List -->
+        <div class="section">
+          <h2>Stored Files</h2>
+          <button onclick="loadFiles()" class="btn-small">Refresh List</button>
+          <div id="filesList" class="files-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Show alert message
+      function showAlert(message, type) {
+        const alertBox = document.getElementById("alertBox");
+        alertBox.textContent = message;
+        alertBox.className = `alert ${type}`;
+        alertBox.style.display = "block";
+
+        setTimeout(() => {
+          alertBox.style.display = "none";
+        }, 5000);
+      }
+
+      // Submit form
+      document
+        .getElementById("htmlForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const filename = document.getElementById("filename").value;
+          const html = document.getElementById("htmlContent").value;
+
+          try {
+            const response = await fetch("/api/store-html", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ filename, html }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+              showAlert(
+                `✓ ${data.message} - File: ${data.filename}`,
+                "success"
+              );
+
+              // Show stats
+              document.getElementById("statsSection").style.display = "grid";
+              document.getElementById("originalSize").textContent =
+                data.originalLength + " bytes";
+              document.getElementById("sanitizedSize").textContent =
+                data.sanitizedLength + " bytes";
+              document.getElementById("bytesRemoved").textContent =
+                data.bytesRemoved + " bytes";
+
+              // Clear form
+              document.getElementById("htmlContent").value = "";
+
+              // Reload files list
+              loadFiles();
+            } else {
+              showAlert(`✗ Error: ${data.error}`, "error");
+            }
+          } catch (error) {
+            showAlert(`✗ Error: ${error.message}`, "error");
+          }
+        });
+
+      // Load files
+      async function loadFiles() {
+        try {
+          const response = await fetch("/api/files");
+          const data = await response.json();
+
+          const filesList = document.getElementById("filesList");
+
+          if (data.success && data.files.length > 0) {
+            filesList.innerHTML = data.files
+              .map(
+                (file) => `
+                        <div class="file-item">
+                            <span>${file}</span>
+                            <div class="file-actions">
+                                <button class="btn-small btn-view" onclick="viewFile('${file}')">View</button>
+                                <button class="btn-small btn-delete" onclick="deleteFile('${file}')">Delete</button>
+                            </div>
+                        </div>
+                    `
+              )
+              .join("");
+          } else {
+            filesList.innerHTML =
+              '<p style="color: #999; text-align: center; padding: 20px;">No files stored yet</p>';
+          }
+        } catch (error) {
+          showAlert(`✗ Error loading files: ${error.message}`, "error");
+        }
+      }
+
+      // View file
+      function viewFile(filename) {
+        window.open(`/api/view/${filename}`, "_blank");
+      }
+
+      // Delete file
+      async function deleteFile(filename) {
+        if (!confirm(`Are you sure you want to delete ${filename}?`)) {
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/delete/${filename}`, {
+            method: "DELETE",
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            showAlert(`✓ ${data.message}`, "success");
+            loadFiles();
+          } else {
+            showAlert(`✗ Error: ${data.error}`, "error");
+          }
+        } catch (error) {
+          showAlert(`✗ Error: ${error.message}`, "error");
+        }
+      }
+
+      // Load files on page load
+      loadFiles();
+    </script>
+  </body>
+</html>
